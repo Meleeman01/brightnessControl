@@ -1,0 +1,58 @@
+#!/bin/bash
+INC_UP=10
+INC_DOWN=10
+BACKLIGHT_BRIGHTNESS="/sys/class/backlight/intel_backlight/brightness"
+CURRENT=$( cat $BACKLIGHT_BRIGHTNESS )
+
+#check to see if we can write to the brightness file
+is_writable() {
+	if [[ ! -w $BACKLIGHT_BRIGHTNESS ]]; then
+		echo -e -n "\033[0;31mERROR: \033[0m"
+		echo "file not writable: "$BACKLIGHT_BRIGHTNESS
+		echo "Try: sudo backlight and make sure the BACKLIGHT_BRIGHTNESS variable is set to the correct path to the file."
+		exit 1
+	fi
+}
+
+#increment command 
+if [[ $1 = "++" || $1 = "up"  ]]; then
+	#statements
+	is_writable
+	echo $(($CURRENT + $INC_UP)) > $BACKLIGHT_BRIGHTNESS
+	echo "brightness up $INC_UP units."
+fi
+
+#decrement command
+if [[ $1 = "--" || $1 = "down" ]]; then
+	is_writable
+	echo $(($CURRENT - $INC_DOWN)) > $BACKLIGHT_BRIGHTNESS
+	echo "brightness down $INC_DOWN units."
+
+fi
+
+#help command
+if [[ $1 = '--help' ]]; then
+
+	echo 'backlight, a simple bash script that sets the brightness of your screen:
+		USAGE:
+		backlight [option] [number from 0-100]
+		OPTIONS: up/++, down/--, set'
+
+fi
+
+#set command
+if [[ $1 = "set" && $2 && $2 =~ ^[0-9][0-9]?$|^100$ ]]; then
+	#statements
+	is_writable
+	echo $2 > $BACKLIGHT_BRIGHTNESS;
+	echo brightness is set to $2
+elif [[ $1 = "set" ]]; then
+	echo 'invalid parameter, enter a number between 0 and 100' 	
+fi
+
+#default command
+if [[ $1 = '' ]]; then
+	#get current brightness
+	printf "CURRENT BRIGHTNESS: "$CURRENT"\n"
+	printf "\nno parameters passed. try typing 'backlight up' or 'backlight down'\n\nyou can also type backlight --help\n"
+fi
